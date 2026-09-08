@@ -4,7 +4,7 @@
  * 2) img/system、fonts 留壳本地，Boot 不堵在大包上
  * 3) SceneManager.run 等 packReady；遮罩在 Boot.terminate 揭开
  *
- *   默认 → R2 game-pack.zip（含压缩后的 spines）
+ *   默认 → 直接使用 R2 媒体资源；?pack=r2 显式启用 game-pack.zip
  *   ?pack=local → 本地 publish/game-pack.zip
  *   ?pack=r2    → R2（显式）
  *   ?pack=0     → 散文件
@@ -14,13 +14,14 @@
   "use strict";
 
   var CDN = "https://pub-db5421ea70f04d5e8caa7e9a211e381c.r2.dev/umi-no-ie/";
-  var CACHE_TAG = "umi260908v";
+  var CACHE_TAG = "umi260908w";
   var PACK_URL_R2 = CDN + "game-pack.zip?v=" + CACHE_TAG;
   var PACK_URL_LOCAL = "./game-pack.zip?v=" + CACHE_TAG;
   var qs = location.search || "";
   var forceLocal = /(?:^|[?&])cdn=0(?:&|$)/.test(qs);
   var USE_CDN = !forceLocal;
-  var packMode = "r2";
+  // R2 ZIP 未配置 CORS，沙箱 iframe 无法通过 XHR 读取；默认走直链媒体资源。
+  var packMode = "off";
   if (/(?:^|[?&])pack=0(?:&|$)/.test(qs)) packMode = "off";
   else if (/(?:^|[?&])pack=local(?:&|$)/.test(qs)) packMode = "local";
   else if (/(?:^|[?&])pack=r2(?:&|$)/.test(qs)) packMode = "r2";
@@ -130,6 +131,7 @@
     if (!USE_CDN || !shouldMapRel(rel)) return url;
     var packed = blobUrl(pathOnly);
     if (packed) return packed;
+    if (shouldMapRel(pathOnly)) return CDN + pathOnly;
     if (String(url).indexOf(CDN) === 0) return url;
     return url;
   }

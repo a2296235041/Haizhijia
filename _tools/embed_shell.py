@@ -54,17 +54,22 @@ def main() -> None:
     jszip = (PUB / "js/libs/jszip.min.js").read_text(encoding="utf-8")
     jszip = re.sub(r"</script", r"<\\/script", jszip, flags=re.IGNORECASE)
     payload = make_pack(shell_files())
+    chunks = [payload[i : i + 131072] for i in range(0, len(payload), 131072)]
+    chunk_nodes = "\n".join(
+        '<script class="umi-shell-chunk" type="application/octet-stream">'
+        f"{chunk}</script>"
+        for chunk in chunks
+    )
     block = (
         f"{START}\n"
         f"<style id=\"umi-embedded-style\">\n{css}\n</style>\n"
         f"<script id=\"umi-embedded-jszip\">\n{jszip}\n</script>\n"
-        f"<script id=\"umi-shell-pack\" type=\"application/octet-stream\">"
-        f"{payload}</script>\n"
+        f"{chunk_nodes}\n"
         f"{END}\n"
     )
-    marker = "<!-- UMI_BOOTSTRAP_START -->"
+    marker = "<!-- UMI_PAYLOAD_SLOT -->"
     if marker not in html:
-        raise SystemExit("missing UMI_BOOTSTRAP_START marker")
+        raise SystemExit("missing UMI_PAYLOAD_SLOT marker")
     html = html.replace(marker, block + marker, 1)
     html = "\n".join(line.rstrip() for line in html.splitlines()) + "\n"
     INDEX.write_text(html, encoding="utf-8")

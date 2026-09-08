@@ -19,7 +19,7 @@ END = "<!-- UMI_EMBEDDED_SHELL_END -->"
 
 def shell_files() -> list[Path]:
     files: list[Path] = [PUB / "asset-cdn.js", PUB / "translations.json"]
-    for folder in ("js", "data", "img/system", "fonts"):
+    for folder in ("js", "data", "img/system"):
         files.extend(path for path in (PUB / folder).rglob("*") if path.is_file())
     return sorted(set(files))
 

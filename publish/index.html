@@ -5,9 +5,9 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="viewport" content="user-scalable=no">
-        <link rel="icon" href="icon/icon.png" type="image/png">
-        <link rel="apple-touch-icon" href="icon/icon.png">
-        <link rel="stylesheet" type="text/css" href="css/game.css">
+        <link rel="icon" href="./icon/icon.png" type="image/png">
+        <link rel="apple-touch-icon" href="./icon/icon.png">
+        <link rel="stylesheet" type="text/css" href="./css/game.css">
         <title>ウミノイエ</title>
         <style>
             /* ========== 新增：手机端竖屏提醒弹窗 ========== */
@@ -373,15 +373,15 @@
                 });
             })();
         </script>
-        <script type="text/javascript" src="js/libs/jszip.min.js"></script>
+        <script type="text/javascript" src="./js/libs/jszip.min.js"></script>
         <script
           type="text/javascript"
-          src="asset-cdn.js"
-          onerror="window.__UMI_EARLY_ERROR__ = '资源引导脚本加载失败'"
+          src="./asset-cdn.js"
+          onerror="window.__UMI_EARLY_ERROR__ = '资源引导脚本加载失败：' + this.src"
         ></script>
         <script>
         (function () {
-          window.__UMI_RELEASE__ = "umi260908n";
+          window.__UMI_RELEASE__ = "umi260908o";
           // 主引擎由 HTML 静态加载；首个可交互场景出现后才移除遮罩。
           var overlay = document.getElementById("umi-pack-loading");
           var fill = document.getElementById("umi-pack-fill");
@@ -396,6 +396,7 @@
             error: "出错"
           };
           var hidden = false;
+          var failed = false;
           var bootTimer = null;
           var bootWatchStartedAt = 0;
 
@@ -436,7 +437,8 @@
           }
 
           function showBootError(message) {
-            if (hidden) return;
+            if (hidden || failed) return;
+            failed = true;
             if (bootTimer) {
               clearInterval(bootTimer);
               bootTimer = null;
@@ -490,6 +492,7 @@
             if (bootWatchStartedAt) return;
             bootWatchStartedAt = Date.now();
             function tick() {
+              if (failed) return;
               tryHookSceneStart();
               try {
                 var s = window.SceneManager && SceneManager._scene;
@@ -558,18 +561,18 @@
           "use strict";
 
           var scripts = [
-            "js/libs/pixi.js",
-            "js/libs/pako.min.js",
-            "js/libs/localforage.min.js",
-            "js/libs/effekseer.min.js",
-            "js/libs/vorbisdecoder.js",
-            "js/rmmz_core.js",
-            "js/rmmz_managers.js",
-            "js/rmmz_objects.js",
-            "js/rmmz_scenes.js",
-            "js/rmmz_sprites.js",
-            "js/rmmz_windows.js",
-            "js/plugins.js"
+            "./js/libs/pixi.js",
+            "./js/libs/pako.min.js",
+            "./js/libs/localforage.min.js",
+            "./js/libs/effekseer.min.js",
+            "./js/libs/vorbisdecoder.js",
+            "./js/rmmz_core.js",
+            "./js/rmmz_managers.js",
+            "./js/rmmz_objects.js",
+            "./js/rmmz_scenes.js",
+            "./js/rmmz_sprites.js",
+            "./js/rmmz_windows.js",
+            "./js/plugins.js"
           ];
           var loaded = 0;
           var scriptsReady = false;
@@ -595,7 +598,7 @@
               return;
             }
             effekseer.initRuntime(
-              "js/libs/effekseer.wasm",
+              "./js/libs/effekseer.wasm",
               function () {
                 try {
                   SceneManager.run(Scene_Boot);
@@ -609,7 +612,7 @@
                 }
               },
               function () {
-                fail("引擎组件加载失败：js/libs/effekseer.wasm");
+                fail("引擎组件加载失败：./js/libs/effekseer.wasm");
               }
             );
           }
@@ -639,7 +642,7 @@
               script.async = false;
               script.onload = onComponentLoaded;
               script.onerror = function () {
-                fail("引擎组件加载失败：" + url);
+                fail("引擎组件加载失败：" + script.src);
               };
               document.body.appendChild(script);
             });

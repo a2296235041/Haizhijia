@@ -62,7 +62,10 @@ def main() -> None:
         f"{payload}</script>\n"
         f"{END}\n"
     )
-    html = html.replace("</head>", block + "</head>", 1)
+    marker = "<!-- UMI_BOOTSTRAP_START -->"
+    if marker not in html:
+        raise SystemExit("missing UMI_BOOTSTRAP_START marker")
+    html = html.replace(marker, block + marker, 1)
     html = "\n".join(line.rstrip() for line in html.splitlines()) + "\n"
     INDEX.write_text(html, encoding="utf-8")
     size_mb = INDEX.stat().st_size / 1024 / 1024

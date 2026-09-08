@@ -1,0 +1,3 @@
+publish/game-pack.zip
+# 大资源在 R2；本地壳不含 spines/audio/大图
+# 打包临时目录 _tools/_pack_work 勿 sync（应放到 游戏/海之家/备份）

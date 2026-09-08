@@ -1,0 +1,12 @@
+海之家 / ウミノイエ — DZMM 壳（仅壳）
+
+本地工程只保留 publish 壳 + 小工具脚本，大资源在 R2。
+
+- 壳：publish/（js/data/css + img/system + fonts；约 24MB）
+- 重资源：R2 yodu/umi-no-ie/game-pack.zip（压缩后含 spines）
+- 源盘与打包缓存备份：../海之家/ 与 ../海之家/备份/
+- sync 跳过：publish/game-pack.zip（本地默认不放 zip）
+- 重新打包：_tools/compress_pack_spines.py（会写临时 _pack_work，打完请挪到 海之家/备份）
+- 上传：_tools/upload_pack_only.py（yodu 凭证）
+
+预览默认 pack=r2；本地包调试才需要临时放 publish/game-pack.zip。

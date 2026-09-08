@@ -7,7 +7,8 @@
         <meta name="viewport" content="user-scalable=no">
         <link rel="icon" href="icon/icon.png" type="image/png">
         <link rel="apple-touch-icon" href="icon/icon.png">
-        <link rel="stylesheet" type="text/css" href="css/game.css?v=umi260908i">
+        <link rel="stylesheet" type="text/css" href="css/game.css?v=umi260908j">
+        <link rel="preload" href="js/main.js?v=umi260908j" as="script">
         <title>ウミノイエ</title>
         <style>
             /* ========== 新增：手机端竖屏提醒弹窗 ========== */
@@ -373,8 +374,8 @@
                 });
             })();
         </script>
-        <script type="text/javascript" src="js/libs/jszip.min.js?v=umi260908i"></script>
-        <script type="text/javascript" src="asset-cdn-umi260908i.js"></script>
+        <script type="text/javascript" src="js/libs/jszip.min.js?v=umi260908j"></script>
+        <script type="text/javascript" src="asset-cdn-umi260908j.js"></script>
         <script>
         (function () {
           // 资源包就绪后注入引擎；首个可交互场景出现后才移除遮罩。
@@ -517,7 +518,7 @@
               });
             }, 400);
             var s = document.createElement("script");
-            s.src = "js/main-umi260908i.js";
+            s.src = "js/main.js?v=umi260908j";
             s.onload = watchBoot;
             s.onerror = function () {
               showBootError("启动脚本加载失败，请刷新重试");

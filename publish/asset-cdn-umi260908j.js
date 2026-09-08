@@ -14,7 +14,7 @@
   "use strict";
 
   var CDN = "https://pub-db5421ea70f04d5e8caa7e9a211e381c.r2.dev/umi-no-ie/";
-  var CACHE_TAG = "umi260908i";
+  var CACHE_TAG = "umi260908j";
   var PACK_URL_R2 = CDN + "game-pack.zip?v=" + CACHE_TAG;
   var PACK_URL_LOCAL = "game-pack.zip?v=" + CACHE_TAG;
   var qs = location.search || "";

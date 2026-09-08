@@ -21,8 +21,12 @@ const effekseerWasmUrl = "js/libs/effekseer.wasm";
 class Main {
     constructor() {
         this.xhrSucceeded = false;
+        this.xhrFinished = false;
         this.loadCount = 0;
         this.error = null;
+        this.scriptsReady = false;
+        this.windowReady = document.readyState === "complete";
+        this.started = false;
     }
 
     run() {
@@ -51,7 +55,15 @@ class Main {
     testXhr() {
         const xhr = new XMLHttpRequest();
         xhr.open("GET", document.currentScript.src);
-        xhr.onload = () => (this.xhrSucceeded = true);
+        xhr.onload = () => {
+            this.xhrSucceeded = xhr.status >= 200 && xhr.status < 400;
+            this.xhrFinished = true;
+            this.tryStart();
+        };
+        xhr.onerror = () => {
+            this.xhrFinished = true;
+            this.tryStart();
+        };
         xhr.send();
     }
 
@@ -76,13 +88,19 @@ class Main {
             document.body.appendChild(script);
         }
         this.numScripts = scriptUrls.length;
-        window.addEventListener("load", this.onWindowLoad.bind(this));
+        if (!this.windowReady) {
+            window.addEventListener("load", this.onWindowLoad.bind(this), {
+                once: true
+            });
+        }
         window.addEventListener("error", this.onWindowError.bind(this));
     }
 
     onScriptLoad() {
         if (++this.loadCount === this.numScripts) {
             PluginManager.setup($plugins);
+            this.scriptsReady = true;
+            this.tryStart();
         }
     }
 
@@ -111,6 +129,15 @@ class Main {
     }
 
     onWindowLoad() {
+        this.windowReady = true;
+        this.tryStart();
+    }
+
+    tryStart() {
+        if (this.started || !this.windowReady || !this.scriptsReady || !this.xhrFinished) {
+            return;
+        }
+        this.started = true;
         if (!this.xhrSucceeded) {
             const message = "Your browser does not allow to read local files.";
             this.printError("Error", message);

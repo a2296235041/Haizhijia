@@ -105,7 +105,11 @@ class Main {
     }
 
     onScriptError(e) {
-        this.printError("Failed to load", e.target._url);
+        const url = e.target._url || "unknown script";
+        this.printError("Failed to load", url);
+        if (typeof window.__UMI_BOOT_ERROR__ === "function") {
+            window.__UMI_BOOT_ERROR__("引擎组件加载失败：" + url);
+        }
     }
 
     printError(name, message) {

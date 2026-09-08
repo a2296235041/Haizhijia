@@ -14,7 +14,7 @@
   "use strict";
 
   var CDN = "https://pub-db5421ea70f04d5e8caa7e9a211e381c.r2.dev/umi-no-ie/";
-  var CACHE_TAG = "umi260908j";
+  var CACHE_TAG = "umi260908k";
   var PACK_URL_R2 = CDN + "game-pack.zip?v=" + CACHE_TAG;
   var PACK_URL_LOCAL = "game-pack.zip?v=" + CACHE_TAG;
   var qs = location.search || "";
@@ -423,7 +423,13 @@
       installLoadHooks();
       var self = this;
       var args = arguments;
-      return packReady.then(function () {
+      return packReady.then(function (packLoaded) {
+        if (USE_PACK && !packLoaded) {
+          if (typeof window.__UMI_BOOT_ERROR__ === "function") {
+            window.__UMI_BOOT_ERROR__("资源包加载失败，请检查网络后刷新重试");
+          }
+          return;
+        }
         installLoadHooks();
         return _run.apply(self, args);
       });

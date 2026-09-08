@@ -14,7 +14,7 @@
   "use strict";
 
   var CDN = "https://pub-db5421ea70f04d5e8caa7e9a211e381c.r2.dev/umi-no-ie/";
-  var CACHE_TAG = "umi260908q";
+  var CACHE_TAG = "umi260908r";
   var PACK_URL_R2 = CDN + "game-pack.zip?v=" + CACHE_TAG;
   var PACK_URL_LOCAL = "./game-pack.zip?v=" + CACHE_TAG;
   var qs = location.search || "";
@@ -120,11 +120,14 @@
   }
 
   function mapUrl(url) {
-    if (!USE_CDN || !url) return url;
+    if (!url) return url;
     if (/^(?:blob:|data:)/i.test(String(url))) return url;
     var rel = relFromUrl(url);
-    if (!shouldMapRel(rel)) return url;
     var pathOnly = rel.split("#")[0].split("?")[0];
+    var shellUrl =
+      window.__UMI_SHELL_URLS && window.__UMI_SHELL_URLS[pathOnly];
+    if (shellUrl) return shellUrl;
+    if (!USE_CDN || !shouldMapRel(rel)) return url;
     var packed = blobUrl(pathOnly);
     if (packed) return packed;
     if (String(url).indexOf(CDN) === 0) return url;
@@ -370,6 +373,9 @@
       var _makeUrl = FontManager.makeUrl;
       FontManager.makeUrl = function (filename) {
         var raw = "fonts/" + String(filename || "");
+        var shellUrl =
+          window.__UMI_SHELL_URLS && window.__UMI_SHELL_URLS[raw];
+        if (shellUrl) return shellUrl;
         if (isLocalAsset(raw)) return _makeUrl.call(this, filename);
         var packed = blobUrl(raw);
         if (packed) return packed;

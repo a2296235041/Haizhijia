@@ -373,16 +373,10 @@
                 });
             })();
         </script>
-        <script type="text/javascript" src="./js/libs/jszip.min.js"></script>
-        <script
-          type="text/javascript"
-          src="./asset-cdn.js"
-          onerror="window.__UMI_EARLY_ERROR__ = '资源引导脚本加载失败：' + this.src"
-        ></script>
         <script>
         (function () {
-          window.__UMI_RELEASE__ = "umi260908o";
-          // 主引擎由 HTML 静态加载；首个可交互场景出现后才移除遮罩。
+          window.__UMI_RELEASE__ = "umi260908p";
+          // 外部脚本由 Blob 启动器加载；首个可交互场景出现后才移除遮罩。
           var overlay = document.getElementById("umi-pack-loading");
           var fill = document.getElementById("umi-pack-fill");
           var msg = document.getElementById("umi-pack-msg");
@@ -417,9 +411,11 @@
             }
           }
 
-          if (window.__UMI_CDN && typeof __UMI_CDN.onProgress === "function") {
-            __UMI_CDN.onProgress(setUi);
-          }
+          window.__UMI_ATTACH_CDN__ = function () {
+            if (window.__UMI_CDN && typeof __UMI_CDN.onProgress === "function") {
+              __UMI_CDN.onProgress(setUi);
+            }
+          };
 
           function hideOverlay() {
             if (hidden) return;
@@ -525,9 +521,6 @@
           }
 
           window.__UMI_BOOT_ERROR__ = showBootError;
-          if (window.__UMI_EARLY_ERROR__) {
-            showBootError(window.__UMI_EARLY_ERROR__ + "，请刷新重试");
-          }
           window.__UMI_MAIN_LOADED__ = function () {
             var ready = window.__UMI_CDN && window.__UMI_CDN.ready;
             if (!ready || typeof ready.then !== "function") {
@@ -560,7 +553,7 @@
         (function () {
           "use strict";
 
-          var scripts = [
+          var engineScripts = [
             "./js/libs/pixi.js",
             "./js/libs/pako.min.js",
             "./js/libs/localforage.min.js",
@@ -574,11 +567,11 @@
             "./js/rmmz_windows.js",
             "./js/plugins.js"
           ];
-          var loaded = 0;
           var scriptsReady = false;
           var windowReady = document.readyState === "complete";
           var started = false;
           var firstError = null;
+          var blobUrls = [];
 
           function fail(message) {
             if (typeof window.__UMI_BOOT_ERROR__ === "function") {
@@ -617,9 +610,7 @@
             );
           }
 
-          function onComponentLoaded() {
-            loaded += 1;
-            if (loaded !== scripts.length) return;
+          function finishComponents() {
             try {
               PluginManager.setup($plugins);
               scriptsReady = true;
@@ -634,18 +625,68 @@
             }
           }
 
-          function loadComponents() {
-            scripts.forEach(function (url) {
+          async function loadScriptBlob(url) {
+            var response;
+            try {
+              response = await fetch(url, { cache: "no-store" });
+            } catch (error) {
+              throw new Error(
+                url + " fetch failed: " + ((error && error.message) || "network error")
+              );
+            }
+            if (!response.ok) {
+              throw new Error(url + " HTTP " + response.status);
+            }
+            var source = await response.text();
+            if (/^\s*<!doctype html/i.test(source)) {
+              throw new Error(url + " returned HTML");
+            }
+            var blobUrl = URL.createObjectURL(
+              new Blob([source + "\n//# sourceURL=" + url], {
+                type: "application/javascript"
+              })
+            );
+            blobUrls.push(blobUrl);
+            await new Promise(function (resolve, reject) {
               var script = document.createElement("script");
               script.type = "text/javascript";
-              script.src = url;
+              script.src = blobUrl;
               script.async = false;
-              script.onload = onComponentLoaded;
+              script.onload = resolve;
               script.onerror = function () {
-                fail("引擎组件加载失败：" + script.src);
+                reject(new Error(url + " blob execution failed"));
               };
               document.body.appendChild(script);
             });
+          }
+
+          async function boot() {
+            try {
+              if (window.dzmm && dzmm.loading && typeof dzmm.loading.progress === "function") {
+                dzmm.loading.progress({ phase: "start", message: "加载游戏引擎" });
+              }
+            } catch (error) {}
+            try {
+              await loadScriptBlob("./js/libs/jszip.min.js");
+              await loadScriptBlob("./asset-cdn.js");
+              if (typeof window.__UMI_ATTACH_CDN__ === "function") {
+                window.__UMI_ATTACH_CDN__();
+              }
+              if (typeof window.__UMI_MAIN_LOADED__ === "function") {
+                window.__UMI_MAIN_LOADED__();
+              }
+              for (var i = 0; i < engineScripts.length; i += 1) {
+                await loadScriptBlob(engineScripts[i]);
+              }
+              finishComponents();
+            } catch (error) {
+              console.error(
+                "[umi] bootstrap failed",
+                error && error.message,
+                error && error.stack
+              );
+              fail("脚本读取失败：" + ((error && error.message) || "unknown"));
+            }
           }
 
           window.addEventListener("error", function (event) {
@@ -658,10 +699,7 @@
             }, { once: true });
           }
 
-          if (typeof window.__UMI_MAIN_LOADED__ === "function") {
-            window.__UMI_MAIN_LOADED__();
-          }
-          loadComponents();
+          boot();
         })();
         </script>
 </body>

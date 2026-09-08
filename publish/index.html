@@ -375,7 +375,7 @@
         </script>
         <script>
         (function () {
-          window.__UMI_RELEASE__ = "umi260908p";
+          window.__UMI_RELEASE__ = "umi260908q";
           // 外部脚本由 Blob 启动器加载；首个可交互场景出现后才移除遮罩。
           var overlay = document.getElementById("umi-pack-loading");
           var fill = document.getElementById("umi-pack-fill");
@@ -573,6 +573,23 @@
           var firstError = null;
           var blobUrls = [];
 
+          function pathDiagnostic(url) {
+            try {
+              var resolved = new URL(url, document.baseURI);
+              var parts = resolved.pathname.split("/").filter(Boolean);
+              return (
+                "tail=/" +
+                parts.slice(-4).join("/") +
+                " segments=" +
+                parts.length +
+                " baseSlash=" +
+                String(document.baseURI.endsWith("/"))
+              );
+            } catch (error) {
+              return "url-resolve-failed";
+            }
+          }
+
           function fail(message) {
             if (typeof window.__UMI_BOOT_ERROR__ === "function") {
               window.__UMI_BOOT_ERROR__(message);
@@ -631,7 +648,11 @@
               response = await fetch(url, { cache: "no-store" });
             } catch (error) {
               throw new Error(
-                url + " fetch failed: " + ((error && error.message) || "network error")
+                url +
+                " fetch failed (" +
+                pathDiagnostic(url) +
+                "): " +
+                ((error && error.message) || "network error")
               );
             }
             if (!response.ok) {

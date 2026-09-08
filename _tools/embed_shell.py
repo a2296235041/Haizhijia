@@ -4,9 +4,12 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import io
 import re
+import struct
 import zipfile
+import zlib
 from pathlib import Path
 
 
@@ -15,13 +18,53 @@ PUB = ROOT / "publish"
 INDEX = PUB / "index.html"
 START = "<!-- UMI_EMBEDDED_SHELL_START -->"
 END = "<!-- UMI_EMBEDDED_SHELL_END -->"
+EXCLUDED = {
+    "translations.json",
+    "js/main.js",
+    "js/libs/jszip.min.js",
+    "js/libs/effekseer.min.js",
+    "js/libs/effekseer.wasm",
+    "js/libs/vorbisdecoder.js",
+    "js/plugins/KMS_DebugUtil.js",
+    "js/plugins/OptionalJsonTranslation.js",
+}
+PLACEHOLDER_IMAGES = {
+    "img/system/IconSet.png",
+    "img/system/GameOver.png",
+    "img/system/States.png",
+}
 
 
 def shell_files() -> list[Path]:
-    files: list[Path] = [PUB / "asset-cdn.js", PUB / "translations.json"]
+    files: list[Path] = [PUB / "asset-cdn.js"]
     for folder in ("js", "data", "img/system"):
         files.extend(path for path in (PUB / folder).rglob("*") if path.is_file())
-    return sorted(set(files))
+    return sorted(
+        path
+        for path in set(files)
+        if path.relative_to(PUB).as_posix() not in EXCLUDED
+    )
+
+
+def png_chunk(kind: bytes, payload: bytes) -> bytes:
+    return (
+        struct.pack(">I", len(payload))
+        + kind
+        + payload
+        + struct.pack(">I", binascii.crc32(kind + payload) & 0xFFFFFFFF)
+    )
+
+
+def transparent_png(source: Path) -> bytes:
+    raw = source.read_bytes()
+    width, height = struct.unpack(">II", raw[16:24])
+    rows = (b"\x00" + b"\x00" * (width * 4)) * height
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + png_chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0))
+        + png_chunk(b"IDAT", zlib.compress(rows, 9))
+        + png_chunk(b"IEND", b"")
+    )
 
 
 def make_pack(files: list[Path]) -> str:
@@ -29,7 +72,10 @@ def make_pack(files: list[Path]) -> str:
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for path in files:
             key = path.relative_to(PUB).as_posix()
-            archive.write(path, key)
+            if key in PLACEHOLDER_IMAGES:
+                archive.writestr(key, transparent_png(path))
+            else:
+                archive.write(path, key)
     return base64.b64encode(output.getvalue()).decode("ascii")
 
 
